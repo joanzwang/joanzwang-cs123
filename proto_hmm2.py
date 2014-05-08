@@ -9,13 +9,20 @@ from mrjob.job import MRJob
 class MRfhmm(MRJob):
 
     #list_x can be list Pi's or list of transmat's
-    def compute_fhmm_x(list_x):
-        rv = list_x[0]
-        for i in range(1, len(list_x)):
-            rv = np.kron(rv, list_x[i])
-        return rv
+    def compute_fhmm_x(self, list_x):
+        if (list_x is None):
+            print "this is not good"
+            return 
+            
+        else:
+            print "HII"
+            print len(list_x)
+            rv = list_x[0]
+            for i in range(1, len(list_x)):
+                rv = np.kron(rv, list_x[i])
+            return rv
 
-    def compute_fhmm_means_cov(list_means):
+    def compute_fhmm_means_cov(self, list_means):
         #list of all combination of products of means
         combination_of_states = list(itertools.product(*list_means))
         number_of_combinations = len(combination_of_states)
@@ -84,8 +91,10 @@ class MRfhmm(MRJob):
         self.list_pi.append(model[appliance].startprob_)
         self.list_transmat.append(model[appliance].transmat_)
         self.list_means.append(model[appliance].means_.flatten().tolist())
+        print model[appliance].startprob_
 
     def final_create_fhmm(self):
+        
         list_fhmm_pi = self.compute_fhmm_x(self.list_pi)
         list_fhmm_transmat = self.compute_fhmm_x(self.list_transmat)
         [means_fhmm, cov_fhmm] = self.compute_fhmm_means_cov(self.list_means)
