@@ -279,7 +279,7 @@ bool calc_iterate(int iter, int nmax_iter, double n_log_prob, double o_log_prob)
 int main(int argc, char *argv[]) {
     int house_id = 1;
     int ndevices = 19;
-    int T = 99999999;
+    int T = 9999999;
     int nmax_iter = 5;
 
 
