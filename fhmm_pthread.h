@@ -37,6 +37,9 @@ typedef struct{
     int T;
 }*load_arg_t;
 
+/*prints specified array into a file*/
+void print_array(double *array, int size, FILE *fp);
+
 /*initial array population, making sure that all rows add up to 1*/
 double *row_stochastic(double *array, int size);
 
@@ -49,10 +52,13 @@ void *hmm_calc(void *arg);
 /*compute the alpha array for this hmm model*/
 void alpha_pass(double *c_array, int N, double **alpha, lambda *l, double *O, int T);
 
+/*compute the beta array for this hmm model*/
 void beta_pass(lambda *l, int N, int T, double *O, double **beta, double *c_array);
 
+/*compute the gamma and digamma arrays for this hmm model*/
 void gamma_pass(int T, int N, lambda *l, double *O, double **alpha, double **beta, double **gamma, double **digamma);
 
+/*recalculate the parameters of the model*/
 void recalc(lambda *l, int N, int M, int T, double *O, double **gamma, double **digamma);
 
 /*find the log probability of observing our data set given model lambda l*/

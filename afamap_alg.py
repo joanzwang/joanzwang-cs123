@@ -46,7 +46,6 @@ def open_train(train_id):
 
 def get_params(models_arr):
   A_arr = models_arr[0]
-  #B_arr = models_arr[1]
   pi_arr = models_arr[2]
 
   mu_arr = []   #means matrix
@@ -73,8 +72,8 @@ def afamap(mu_arr, models_arr, test_data, T):
 
   predict_arr = B_arr
 
+  #the following loop is an approximation of the afamap algorithm
   while(repeat):
-    #first part of the afamap algorithm
     first_sum = 0
     sum_mu_Q = 0
     for t in T:
@@ -123,7 +122,7 @@ def afamap(mu_arr, models_arr, test_data, T):
       result_arr[i].append(predict_arr[t] * mu[i][t])
   return result_arr
 
-#really bad unmathematically sound method for handling optimization
+#unmathematically sound method for handling optimization
 def optimize(predict_arr, add):
   for row in predict_arr:
     for element in row:
@@ -148,12 +147,16 @@ def main(argv):
   train_id = sys.argv[2]
   T = sys.argv[3]
 
+  #retrieve the data for both the testing and training files
   test_data = open_test(test_id)
   models_arr = open_train(train_id)
   mu = []
   q_arr = []
 
+  #mu_arr is the matrix of the mean matrices of all of the states
   mu_arr = get_params(models_arr)
+  
+  #q_arr is the predicted disaggregated output for the testing house
   q_arr = afamap(mu_arr, models_arr, test_data, T)
   write_to_file(q_arr)
 

@@ -11,13 +11,14 @@
 #define NSTATE 4
 #define MOBSRV 450
 
+/*prints specified array into a file*/
 void print_array(double *array, int size, FILE *fp) {
   for (int i = 0; i < size; i++) {
     fprintf(fp, "%7.2f", array[i]);
   }
 }
 
-/*initial array population, making sure that all rows add up to 1*/
+/*initialize array population, making sure that all rows add up to 1*/
 double *row_stochastic(double *array, int size) {
   array = ckMalloc(sizeof(double) * size);
   double even = (double)1/size;
@@ -36,7 +37,6 @@ void *load_data(void *arg) {
     double **O_house = la->O_house;
 
     char *s;
-    //int num_channel;
 
     FILE *f = fopen(la->filename, "r");
     if (f == NULL) {
@@ -46,21 +46,17 @@ void *load_data(void *arg) {
     la->T = 0;
     printf("filename %s\n", la->filename);
     while ((s = readLine(f)) != NULL) {
-        //printf("%s\n", s);
         char *token = strtok(s, ",");
         int i = 0;
+        //for every line in the file that isn't the time, so for every device
+        //write the energy output of the device into the array O_house
         if (strcmp(token,"timestamp") != 0) {
-            //char buff[strlen(s)+1];
-            //strcpy(buff, s);
-            //printf("read here %s\n", buff);
 
             printf("token %s ", token);
-            //O_house[la->T][0] = strtod(token, NULL);
             la->T = 0;
             while(token !=NULL) {
               token = strtok(NULL, ",");
               if (token != NULL) {
-                //printf("%s AND %d\n", token, i);
                 double temp = strtod(token, NULL);
                 O_house[i][la->T] = temp;
                 la->T++;
@@ -68,10 +64,7 @@ void *load_data(void *arg) {
             }
             i++;
         }
-
-        printf ("i am in the func %d\n", la->T);
     }
-    printf("LA %d\n", la->T);
     pthread_exit(NULL);
 }
 
@@ -92,27 +85,25 @@ void *hmm_calc(void *arg) {
   double **digamma = d->digamma;
   double log_prob_old = d->log_prob_old;
 
-  printf("point b \n");
-
+  //perform the alpha and beta passes to determine arrays alpha and beta
   alpha_pass(c_array, N, alpha, l, O, T);
   beta_pass(l, N, T, O, beta, c_array);
-
-  printf("point c \n");
-
+  
+  //perform gamma_pass, which uses alpha and beta matrices to determine gamma and digamma
   gamma_pass(T, N, l, O, alpha, beta, gamma, digamma);
+
+  //recalculate the components of the model based off of gamma and digamma
   recalc(l, N, M, T, O, gamma, digamma);
+
+  //calculate the log likelihood of the observations given our model, and decide whether or not to iterate
   double log_prob_new = log_prob(T, c_array);
   d->iter++;
   bool iterate = calc_iterate(d->iter, d->nmax_iter, log_prob_new, log_prob_old);
 
-  printf("in d \n");
-
   if (iterate) {
     d->log_prob_old = log_prob_new;
-    printf("repeat \n");
     hmm_calc(d);
   }
-  printf("done \n");
 
   free(alpha);
   free(beta);
@@ -126,11 +117,11 @@ void *hmm_calc(void *arg) {
 /*compute the alpha array for this hmm model*/
 void alpha_pass(double *c_array, int N, double **alpha, lambda *l, double *O, int T) {
   printf("in alpha \n");
-  //lambda la = (lambda) l;
+
   double **A = l->A;
   double **B = l->B;
   double *pi = l->pi;
-  //compute first element of alpha;
+
   c_array[0] = 0;
   for (int i = 0; i < N; i++) {
     if (O != NULL) {
@@ -195,7 +186,7 @@ void beta_pass(lambda *l, int N, int T, double *O, double **beta, double *c_arra
 }
 
 void gamma_pass(int T, int N, lambda *l, double *O, double **alpha, double **beta, double **gamma, double **digamma){
-  //lambda la = (lambda) l;
+
   printf("in gamma \n");
   double **A = l->A;
   double **B = l->B;
@@ -225,7 +216,7 @@ void gamma_pass(int T, int N, lambda *l, double *O, double **alpha, double **bet
 
 void recalc(lambda *l, int N, int M, int T, double *O, double **gamma, double **digamma ){
   printf("in recalc \n");
-  //lambda la = (lambda) l;
+
   double **A = l->A;
   double **B = l->B;
   double *pi = l->pi;
@@ -335,8 +326,6 @@ int main(int argc, char *argv[]) {
     T = la->T;
     /*initialize the number of blocks per thread, depending on total number of blocks in a queue and the total number of threads*/
     pthread_t device_p[ndevices];
-
-    /*sp is an array of arguments sp[i] to be used for start_process threads*/
     data_arg_t *dt = ckMalloc(sizeof(*dt) * ndevices);
 
     lambda **l = ckMalloc(sizeof(*l) * ndevices);
@@ -348,7 +337,6 @@ int main(int argc, char *argv[]) {
       dt[i]->N = NSTATE;
       dt[i]->M = MOBSRV;
       dt[i]->T = T;
-      printf("time is %d\n", T);
       dt[i]->iter = 0;
       dt[i]->nmax_iter = nmax_iter;
       double *obs = (double*)ckMalloc(sizeof(double) * T+2);
@@ -370,10 +358,6 @@ int main(int argc, char *argv[]) {
       }
 
       l[i]->pi = row_stochastic(l[i]->pi, NSTATE);
-      //l[i]->A = A;
-      //l[i]->B = B;
-      //l[i]->pi = pi;
-
 
       dt[i]->l = l[i];
 
