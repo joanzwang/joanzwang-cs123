@@ -88,7 +88,7 @@ void *hmm_calc(void *arg) {
   //perform the alpha and beta passes to determine arrays alpha and beta
   alpha_pass(c_array, N, alpha, l, O, T);
   beta_pass(l, N, T, O, beta, c_array);
-  
+
   //perform gamma_pass, which uses alpha and beta matrices to determine gamma and digamma
   gamma_pass(T, N, l, O, alpha, beta, gamma, digamma);
 
@@ -301,9 +301,9 @@ int main(int argc, char *argv[]) {
 
     /* construct the argument for the load thread */
     load_arg_t la = (load_arg_t) ckMalloc(sizeof(*la));
-    double **O_array = (double**)ckMalloc(sizeof(double)*(ndevices+1)*(T+1));
-    for (int o = 0; o < ndevices+1; o++) {
-      O_array[o] = (double*)ckMalloc(sizeof(double)*T+1);
+    double **O_array = (double**)ckMalloc(sizeof(double)*(ndevices)*(T));
+    for (int o = 0; o < ndevices; o++) {
+      O_array[o] = (double*)ckMalloc(sizeof(double)*T);
     }
     la->O_house = O_array;
     la->filename = filename_in;
@@ -339,18 +339,15 @@ int main(int argc, char *argv[]) {
       dt[i]->T = T;
       dt[i]->iter = 0;
       dt[i]->nmax_iter = nmax_iter;
-      double *obs = (double*)ckMalloc(sizeof(double) * T+2);
-      for (int j = 0; j < T+1; j++) {
-          obs[j] = O_array[i][j];
-      }
 
-      dt[i]->O = obs;
+      //dt[i]->O = obs;
 
       l[i] = (lambda*)ckMalloc(sizeof(lambda));
 
       l[i]->A = (double**)ckMalloc(sizeof(double)*NSTATE*NSTATE);
       l[i]->B = (double**)ckMalloc(sizeof(double)*NSTATE*MOBSRV);
       l[i]->pi = (double*)ckMalloc(sizeof(double)*NSTATE);
+
       for (int n = 0; n < NSTATE; n++) {
         l[i]->A[n] = row_stochastic(l[i]->A[n], NSTATE);
         l[i]->B[n] = row_stochastic(l[i]->B[n], MOBSRV);
@@ -372,6 +369,11 @@ int main(int argc, char *argv[]) {
         dt[i]->beta[t] = ckMalloc(sizeof(double)*NSTATE);
         dt[i]->gamma[t] = ckMalloc(sizeof(double)*NSTATE);
         dt[i]->digamma[t] = ckMalloc(sizeof(double)*NSTATE);
+      }
+      
+      dt[i]->O = (double*)ckMalloc(sizeof(double) * T+2);
+      for (int j = 0; j < T+1; j++) {
+          dt[i]->O[j] = O_array[i][j];
       }
 
       if (pthread_create(&device_p[i], NULL, hmm_calc, dt[i]) != 0) {
