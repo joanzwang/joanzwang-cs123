@@ -1,6 +1,6 @@
-from sklearn import hmm
-import numpy as np
-from scipy.optimize import fmin
+#from sklearn import hmm
+#import numpy as np
+#from scipy.optimize import fmin
 import sys
 
 def open_test(test_id):
@@ -9,11 +9,12 @@ def open_test(test_id):
   O = []
   test_data = [time, O]
 
-  ftest = open("redd_data/agg_house_"+test_id+".csv")
+  fo = open("redd_data/agg_house_"+test_id+".csv")
   for line in fo.readlines():
+    print "reading lines"
     data_list = line.split(",");
     for data in data_list:
-      while data is not "\n":
+      if data is not "\n":
         time.append(data)
       O.append(data)
     fo.close()
@@ -27,19 +28,30 @@ def open_train(train_id):
 
   model = [A, B, pi]
 
-  ftrain = open("house_"+i+"_hmm_output.txt", 'r');
+  ftrain = open("house_"+train_id+"_hmm_output.txt", 'r');
 
-  for line in fo.readlines():
-    data_list = line.split(" ");
+  for line in ftrain.readlines():
+    data_list = line.split(",");
     for data in data_list:
       i = 0
       while data is not None:
+
         while (data is not "a"):
-          A[i].append(line.split(" "))
+          a_list = line.split(".")
+          for a in a_list:
+            #print "in a"
+            A.append(("0."+a))
+        print "done append A"
         while(data is not "b"):
-          B[i].append(line.split(" "))
+          b_list = line.split(".")
+          for b in b_list:
+            B.append(("0."+b))
+        print "done append B"
         while(data is not "pi"):
-          pi[i].append(line.split(" "))
+          pi_list = line.split(".")
+          for p in pi_list:
+            pi.append(("0."+p))
+        print "done append pi"
         i += 1
     fo.close()
   return model
@@ -149,16 +161,22 @@ def main(argv):
 
   #retrieve the data for both the testing and training files
   test_data = open_test(test_id)
+  print "done test open"
   models_arr = open_train(train_id)
+  print "done models arr"
   mu = []
   q_arr = []
 
   #mu_arr is the matrix of the mean matrices of all of the states
   mu_arr = get_params(models_arr)
-  
+  print "done get params"
+
   #q_arr is the predicted disaggregated output for the testing house
   q_arr = afamap(mu_arr, models_arr, test_data, T)
+  print "done q arr"
+
   write_to_file(q_arr)
+  print "done write to file"
 
 if __name__ == "__main__":
   main(sys.argv[1:])

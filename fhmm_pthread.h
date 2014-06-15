@@ -2,10 +2,11 @@
 #define SHORTEN_H
 #include <stdbool.h>
 #include <assert.h>
-
+#define NSTATE 4
+#define MOBSRV 450
 
 /*hmm model to be returned*/
-typedef struct lambda{
+typedef struct {
   double **A;
   double **B;
   double *pi;
@@ -13,12 +14,12 @@ typedef struct lambda{
 
 /*contains data for building passes*/
 typedef struct{
-  //int house_id;
   int N;
   int M;
   int T;
   int iter;
   int nmax_iter;
+  int i;
   double *O; //the observations
   lambda *l;
   double **alpha;
@@ -33,7 +34,6 @@ typedef struct{
 /* type for argument to load_queue */
 typedef struct{
     char *filename;
-    double **O_house;
     int T;
 }*load_arg_t;
 
@@ -50,21 +50,19 @@ void *load_data(void *arg);
 void *hmm_calc(void *arg);
 
 /*compute the alpha array for this hmm model*/
-void alpha_pass(double *c_array, int N, double **alpha, lambda *l, double *O, int T);
+//void alpha_pass(int index, double c_array[], int N, double **alpha, double *O, int T);
 
 /*compute the beta array for this hmm model*/
-void beta_pass(lambda *l, int N, int T, double *O, double **beta, double *c_array);
+//void beta_pass(lambda *lp, int N, int T, double *O, double **beta, double c_array[]);
 
 /*compute the gamma and digamma arrays for this hmm model*/
-void gamma_pass(int T, int N, lambda *l, double *O, double **alpha, double **beta, double **gamma, double **digamma);
+//void gamma_pass(int T, int N, lambda *lp, double *O, double **alpha, double **beta, double **gamma, double **digamma);
 
 /*recalculate the parameters of the model*/
-void recalc(lambda *l, int N, int M, int T, double *O, double **gamma, double **digamma);
+//void recalc(lambda *lp, int N, int M, int T, double *O, double **gamma, double **digamma);
 
 /*find the log probability of observing our data set given model lambda l*/
-double log_prob(int T, double *c_array);
-
-bool calc_iterate(int iter, int nmax_iter, double n_log_prob, double o_log_prob);
+void log_prob(int T, double c_array[]);
 
 
 
